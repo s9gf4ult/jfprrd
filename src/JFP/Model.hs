@@ -1,5 +1,6 @@
 module JFP.Model where
 
+import Control.Lens
 import Control.Monad
 import Data.Time
 import Data.Time.Clock.POSIX
@@ -19,22 +20,26 @@ data TimeSpec = TimeSpec String
 data Follow
   = NoFollow
     -- ^ do not update
-  | Follow Int
+  | Follow NominalDiffTime
     -- ^ update every n secs
 
 data Model = Model
-  { filesToPrint :: [FilePath]
-  , timeStart    :: TimeSpec
-  , timeEnd      :: TimeSpec
-  , follow       :: Follow
-  , lastTick     :: UTCTime
+  { _filesToPrint :: [FilePath]
+  , _timeStart    :: TimeSpec
+  , _timeEnd      :: TimeSpec
+  , _imageSize    :: (Int, Int)
+  , _follow       :: Follow
+  , _lastTick     :: UTCTime
   }
+
+makeLenses ''Model
 
 mkModel :: JFPInput -> Model
 mkModel (JFPInput fps) = Model
-  { filesToPrint = fps
-  , timeStart    = TimeSpec "now-1h"
-  , timeEnd      = TimeSpec "now"
-  , follow       = NoFollow
-  , lastTick     = posixSecondsToUTCTime 0
+  { _filesToPrint = fps
+  , _timeStart    = TimeSpec "now-1h"
+  , _timeEnd      = TimeSpec "now"
+  , _imageSize    = (600, 400)
+  , _follow       = NoFollow
+  , _lastTick     = posixSecondsToUTCTime 0
   }

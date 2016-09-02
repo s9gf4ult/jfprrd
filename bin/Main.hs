@@ -12,5 +12,5 @@ main = do
   builderAddFromFile bld xmlFile
   input <- parseArgs
   view <- connectSignals input bld
-  widgetShowAll $ mainWindow view
+  widgetShowAll $ viewMainWindow view
   mainGUI

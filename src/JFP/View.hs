@@ -3,14 +3,16 @@ module JFP.View where
 import Graphics.UI.Gtk
 
 data View = View
-  { mainWindow   :: Window
-  , followButton :: ToggleButton
-  , followTime   :: SpinButton
+  { viewMainWindow   :: Window
+  , viewImage        :: Image
+  , viewFollowButton :: ToggleButton
+  , viewFollowTime   :: SpinButton
   }
 
 mkView :: Builder -> IO View
 mkView bld = do
-  mainWindow <- builderGetObject bld castToWindow "main"
-  followButton <- builderGetObject bld castToToggleButton "follow"
-  followTime <- builderGetObject bld castToSpinButton "follow_time"
+  viewMainWindow <- builderGetObject bld castToWindow "main"
+  viewImage <- builderGetObject bld castToImage "image"
+  viewFollowButton <- builderGetObject bld castToToggleButton "follow"
+  viewFollowTime <- builderGetObject bld castToSpinButton "follow_time"
   return View {..}
