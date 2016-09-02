@@ -1,14 +1,16 @@
 module Main where
 
 import Graphics.UI.Gtk
+import JFP
 import Paths_jfprrd
 
 main :: IO ()
 main = do
-  initGUI
+  _ <- initGUI
   bld <- builderNew
   xmlFile <- getDataFileName "glade/main.glade"
   builderAddFromFile bld xmlFile
-  win <- builderGetObject bld castToWindow "main"
+  input <- parseArgs
+  win <- connectSignals input bld
   widgetShowAll win
   mainGUI
