@@ -11,6 +11,6 @@ main = do
   xmlFile <- getDataFileName "glade/main.glade"
   builderAddFromFile bld xmlFile
   input <- parseArgs
-  win <- connectSignals input bld
-  widgetShowAll win
+  view <- connectSignals input bld
+  widgetShowAll $ mainWindow view
   mainGUI

@@ -43,10 +43,11 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkSpinButton">
+                  <object class="GtkSpinButton" id="follow_time">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="input_purpose">digits</property>
+                    <property name="numeric">True</property>
                     <property name="value">10</property>
                   </object>
                   <packing>
