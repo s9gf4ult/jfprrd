@@ -8,6 +8,7 @@ import Data.Bits
 import Data.Set(Set)
 import Data.Word
 import Formatting
+import JFP.Model
 import JFP.Types
 
 import qualified Data.Set as S
@@ -79,15 +80,20 @@ cmdLine Cmd{..} = T.unpack
     cmdName (renderColor cmdColor) cmdLegend
 
 -- | Generates drawing cmd params for rrdtool graph
-rrdCmd :: Maybe TimeSpec -> [FilePath] -> [String]
-rrdCmd step fps = map cmdDef cmds ++ map cmdLine cmds
+rrdCmd :: Maybe TimeSpec -> [File] -> [String]
+rrdCmd step files = map cmdDef cmds ++ map cmdLine cmds
   where
-    cmds = getZipList $ Cmd
+    fps = do
+      File file dss <- files
+      ds <- dss
+      let legend = file ++ "[" ++ ds ++ "]"
+      return (file, ds, legend)
+    toCmd (file, ds, legend) name color
+      = Cmd file name color legend ds
+    cmds = getZipList $ toCmd
       <$> ZipList fps
       <*> ZipList names
       <*> ZipList colors
-      <*> ZipList fps             --  FIXME: not smart
-      <*> ZipList (repeat "value") --  FIXME: optional?
       <*> ZipList (repeat "AVERAGE") --  FIXME: optional?
       <*> ZipList (repeat step)
     names = ("n" ++) . show <$> [1..]

@@ -84,7 +84,7 @@ mkController view model' = do
 connectSignals :: JFPInput -> Builder -> IO View
 connectSignals input bld = do
   view <- mkView bld
-  contr <- mkController view $ mkModel input
+  contr <- mkController view =<< mkModel input
 
   on (viewMainWindow view) deleteEvent (liftBase mainQuit *> return False)
   on (viewRefresh view) buttonActivated (controllerRefresh contr)
