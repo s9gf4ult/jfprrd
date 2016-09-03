@@ -1,6 +1,7 @@
 module JFP.Model where
 
 import Control.Lens
+import JFP.Types
 import Control.Monad
 import Data.Time
 import System.Environment
@@ -12,11 +13,6 @@ parseArgs = do
   args <- getArgs
   when (null args) $ fail "no files got"
   return $ JFPInput args
-
---  FIXME: parse timespec
-data TimeSpec = TimeSpec String
-
-makePrisms ''TimeSpec
 
 data Follow
   = NoFollow

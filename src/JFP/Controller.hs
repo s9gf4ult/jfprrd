@@ -10,7 +10,9 @@ import Data.Maybe
 import Data.Time
 import Data.UUID.V4 (nextRandom)
 import Graphics.UI.Gtk as Gtk
+import JFP.Cmd
 import JFP.Model
+import JFP.Types
 import JFP.View
 import System.Directory
 import System.FilePath
@@ -33,14 +35,15 @@ redrawChart view model = do
     u <- nextRandom
     let fname = temp </> show u
     callProcess "rrdtool"
-      [ "graph"
-      , "-a", "PNG", "-D"
-      , "-w", (show $ model ^. modelImageSize . isWidth)
-      , "-h", (show $ model ^. modelImageSize . isHeight)
-      , "-e", (model ^. modelEnd . _TimeSpec) , "-s", (model ^. modelStart . _TimeSpec)
-      , fname
-      , "DEF:cpu=/var/lib/collectd/localhost/sensors-k10temp-pci-00c3/temperature-temp1.rrd:value:AVERAGE"
-      , "LINE1:cpu#000000:cputemp" ]
+      $ [ "graph"
+        , "-a", "PNG", "-D"
+        , "-w", (show $ model ^. modelImageSize . isWidth)
+        , "-h", (show $ model ^. modelImageSize . isHeight)
+        , "-e", (model ^. modelEnd . _TimeSpec)
+        , "-s", (model ^. modelStart . _TimeSpec)
+        , fname
+        ]
+      ++ rrdCmd (model ^. modelStep) (model ^. modelFiles)
     return fname
   postGUIAsync $ finally
     (imageSetFromFile (viewImage view) file)

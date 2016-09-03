@@ -24,12 +24,16 @@ library
                     , TemplateHaskell
   hs-source-dirs:      src
   exposed-modules:     JFP
+                     , JFP.Cmd
                      , JFP.Controller
                      , JFP.Model
+                     , JFP.Types
                      , JFP.View
   build-depends:       base >= 4.7 && < 5
+                     , containers
                      , directory
                      , filepath
+                     , formatting
                      , gtk3
                      , lens
                      , process
