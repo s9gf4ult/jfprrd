@@ -16,7 +16,7 @@
             <property name="can_focus">True</property>
             <property name="shadow_type">in</property>
             <child>
-              <object class="GtkViewport">
+              <object class="GtkViewport" id="imageContainer">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
@@ -59,7 +59,7 @@
               <object class="GtkEntry" id="start">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="width_chars">5</property>
+                <property name="width_chars">9</property>
                 <property name="placeholder_text" translatable="yes">stat</property>
               </object>
               <packing>
@@ -72,7 +72,7 @@
               <object class="GtkEntry" id="end">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="width_chars">5</property>
+                <property name="width_chars">9</property>
                 <property name="placeholder_text" translatable="yes">end</property>
               </object>
               <packing>
@@ -85,7 +85,7 @@
               <object class="GtkEntry" id="step">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="width_chars">5</property>
+                <property name="width_chars">9</property>
                 <property name="placeholder_text" translatable="yes">step</property>
               </object>
               <packing>

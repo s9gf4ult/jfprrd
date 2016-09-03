@@ -17,6 +17,8 @@ import System.FilePath
 import System.IO.Temp
 import System.Process
 
+import qualified Data.Text as T
+
 data Controller = Controller
   { controllerInit    :: !(IO ())
     -- ^ signaled once at start
@@ -35,7 +37,7 @@ redrawChart view model = do
       , "-a", "PNG", "-D"
       , "-w", (show $ model ^. modelImageSize . isWidth)
       , "-h", (show $ model ^. modelImageSize . isHeight)
-      , "-e", "now", "-s", "now-5h"
+      , "-e", (model ^. modelEnd . _TimeSpec) , "-s", (model ^. modelStart . _TimeSpec)
       , fname
       , "DEF:cpu=/var/lib/collectd/localhost/sensors-k10temp-pci-00c3/temperature-temp1.rrd:value:AVERAGE"
       , "LINE1:cpu#000000:cputemp" ]
@@ -55,7 +57,25 @@ mkController view model' = do
     controllerInit = do
       model <- readTVarIO m
       redrawChart view model
-    controllerRefresh = return ()
+    controllerRefresh = do
+      Rectangle _ _ width height <- widgetGetAllocation $ viewImageContainer view
+      start <- Gtk.get (viewStart view) entryText
+      end <- Gtk.get (viewEnd view) entryText
+      step <- Gtk.get (viewStep view) entryText
+      work <- atomically $ do
+        model <- readTVar m
+        let
+          mstep = case T.unpack $ T.strip $ T.pack step of
+            "" -> Nothing
+            x  -> Just $ TimeSpec x
+          newModel = model
+            & (modelStart .~ TimeSpec start)
+            . (modelEnd .~ TimeSpec end)
+            . (modelStep .~ mstep)
+            . (modelImageSize .~ ImageSize width height)
+        writeTVar m newModel
+        return $ redrawChart view newModel
+      work
   return Controller{..}
 
 connectSignals :: JFPInput -> Builder -> IO View
