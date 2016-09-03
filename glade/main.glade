@@ -4,6 +4,7 @@
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkWindow" id="main">
     <property name="can_focus">False</property>
+    <property name="default_height">500</property>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -14,6 +15,19 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkViewport">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkImage" id="image">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="stock">gtk-missing-image</property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -22,45 +36,62 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkButtonBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="spacing">7</property>
+            <property name="layout_style">center</property>
             <child>
-              <object class="GtkBox">
+              <object class="GtkButton" id="refresh">
+                <property name="label">gtk-refresh</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkToggleButton" id="follow">
-                    <property name="label" translatable="yes">Follow</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="follow_time">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="input_purpose">digits</property>
-                    <property name="numeric">True</property>
-                    <property name="value">10</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="start">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="width_chars">5</property>
+                <property name="placeholder_text" translatable="yes">stat</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="end">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="width_chars">5</property>
+                <property name="placeholder_text" translatable="yes">end</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="step">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="width_chars">5</property>
+                <property name="placeholder_text" translatable="yes">step</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
