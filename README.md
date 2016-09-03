@@ -1,8 +1,6 @@
 # Just Fuckin Print RRD
 
-It does exactly what it names. By defalt it prints `DS=value` for all RRD files
-given in command line because `collectd` puts all its data to `value`
-datasource. It will be little smarter in future, maybe.
+It does exactly what it names. It will be little smarter in future, maybe.
 
 ## Installation
 
