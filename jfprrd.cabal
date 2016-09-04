@@ -27,7 +27,6 @@ library
                      , JFP.Cmd
                      , JFP.Controller
                      , JFP.Model
-                     , JFP.Types
                      , JFP.View
   build-depends:       base >= 4.7 && < 5
                      , containers

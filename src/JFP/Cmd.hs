@@ -9,7 +9,6 @@ import Data.Set(Set)
 import Data.Word
 import Formatting
 import JFP.Model
-import JFP.Types
 
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -96,4 +95,4 @@ rrdCmd step files = map cmdDef cmds ++ map cmdLine cmds
       <*> ZipList colors
       <*> ZipList (repeat "AVERAGE") --  FIXME: optional?
       <*> ZipList (repeat step)
-    names = ("n" ++) . show <$> [1..]
+    names = ("n" ++) . show <$> [(1::Int)..]

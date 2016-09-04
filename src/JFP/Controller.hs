@@ -1,22 +1,19 @@
 module JFP.Controller where
 
-import Control.Concurrent
 import Control.Concurrent.STM
-import Control.Concurrent.STM.TVar
 import Control.Exception
 import Control.Lens
+  ( (^.), (^?), (.~), (&), _Just )
+import Control.Monad
 import Control.Monad.Base
 import Data.Maybe
-import Data.Time
 import Data.UUID.V4 (nextRandom)
 import Graphics.UI.Gtk as Gtk
 import JFP.Cmd
 import JFP.Model
-import JFP.Types
 import JFP.View
 import System.Directory
 import System.FilePath
-import System.IO.Temp
 import System.Process
 
 import qualified Data.Text as T
@@ -25,6 +22,7 @@ data Controller = Controller
   { controllerInit    :: !(IO ())
     -- ^ signaled once at start
   , controllerRefresh :: !(IO ())
+  , controllerResize  :: !(Allocation -> IO ())
   }
 
 -- | Calls redraw chart in main loop asyncronously
@@ -45,7 +43,8 @@ redrawChart view model = do
         ]
       ++ rrdCmd (model ^. modelStep) (model ^. modelFiles)
     return fname
-  postGUIAsync $ finally
+  -- postGUIAsync $ finally
+  finally
     (imageSetFromFile (viewImage view) file)
     (removeFile file)
 
@@ -60,8 +59,10 @@ mkController view model' = do
     controllerInit = do
       model <- readTVarIO m
       redrawChart view model
-    controllerRefresh = do
-      Rectangle _ _ width height <- widgetGetAllocation $ viewImageContainer view
+    controllerRefresh =
+      widgetGetAllocation (viewImageContainer view) >>= refresh True
+    controllerResize = refresh False
+    refresh forced (Rectangle _ _ width height) = do
       start <- Gtk.get (viewStart view) entryText
       end <- Gtk.get (viewEnd view) entryText
       step <- Gtk.get (viewStep view) entryText
@@ -77,7 +78,8 @@ mkController view model' = do
             . (modelStep .~ mstep)
             . (modelImageSize .~ ImageSize width height)
         writeTVar m newModel
-        return $ redrawChart view newModel
+        return $ when (forced || (newModel /= model))
+          $ redrawChart view newModel
       work
   return Controller{..}
 
@@ -86,11 +88,12 @@ connectSignals input bld = do
   view <- mkView bld
   contr <- mkController view =<< mkModel input
 
-  on (viewMainWindow view) deleteEvent (liftBase mainQuit *> return False)
-  on (viewRefresh view) buttonActivated (controllerRefresh contr)
-  on (viewStart view) entryActivated (controllerRefresh contr)
-  on (viewEnd view) entryActivated (controllerRefresh contr)
-  on (viewStep view) entryActivated (controllerRefresh contr)
+  _ <- on (viewMainWindow view) deleteEvent (liftBase mainQuit *> return False)
+  _ <- on (viewImageContainer view) sizeAllocate (controllerResize contr)
+  _ <- on (viewRefresh view) buttonActivated (controllerRefresh contr)
+  _ <- on (viewStart view) entryActivated (controllerRefresh contr)
+  _ <- on (viewEnd view) entryActivated (controllerRefresh contr)
+  _ <- on (viewStep view) entryActivated (controllerRefresh contr)
 
   controllerInit contr
   return view

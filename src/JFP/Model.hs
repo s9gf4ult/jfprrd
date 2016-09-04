@@ -6,13 +6,11 @@ import Control.Lens
 import Control.Monad
 import Data.Maybe
 import Data.Time
-import JFP.Types
 import System.Environment
 import System.Process
 
 import qualified Data.Set as S
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 
 data JFPInput = JFPInput [FilePath]
 
@@ -28,17 +26,24 @@ data Follow
   | Follow NominalDiffTime
     -- ^ update every n secs
 
+--  FIXME: parse timespec
+data TimeSpec = TimeSpec String
+              deriving Eq
+
+makePrisms ''TimeSpec
+
+
 data File = File
   { _fileName :: !FilePath
   , _fileDS   :: ![String]
-  }
+  } deriving (Eq)
 
 makeLenses ''File
 
 data ImageSize = ImageSize
   { _isWidth  :: !Int
   , _isHeight :: !Int
-  }
+  } deriving (Eq)
 
 makeLenses ''ImageSize
 
@@ -48,7 +53,7 @@ data Model = Model
   , _modelEnd       :: !TimeSpec
   , _modelStep      :: !(Maybe TimeSpec)
   , _modelImageSize :: !ImageSize
-  }
+  } deriving (Eq)
 
 makeLenses ''Model
 
@@ -58,8 +63,8 @@ analyzeFile fp = do
     ["info", fp] ""
   let
     t = T.pack out
-    lines  = map T.strip $ T.lines t
-    dss = S.toList $ S.fromList $ catMaybes $ map findDs lines
+    infoLines  = map T.strip $ T.lines t
+    dss = S.toList $ S.fromList $ catMaybes $ map findDs infoLines
   return $ File fp dss
   where
     findDs t = case T.splitAt 3 t of
