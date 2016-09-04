@@ -1,7 +1,7 @@
 module JFP.Controller where
 
 import Control.Concurrent.STM
-import Control.Exception
+import Control.Exception.Safe
 import Control.Lens
   ( (^.), (^?), (.~), (&), _Just )
 import Control.Monad
@@ -14,6 +14,7 @@ import JFP.Model
 import JFP.View
 import System.Directory
 import System.FilePath
+import System.IO
 import System.Process
 
 import qualified Data.Text as T
@@ -26,39 +27,60 @@ data Controller = Controller
   }
 
 -- | Calls redraw chart in main loop asyncronously
-redrawChart :: View -> Model -> IO ()
-redrawChart view model = do
-  file <- do
-    temp <- getTemporaryDirectory
-    u <- nextRandom
-    let fname = temp </> show u
-    callProcess "rrdtool"
-      $ [ "graph"
-        , "-a", "PNG", "-D"
-        , "-w", (show $ model ^. modelImageSize . isWidth)
-        , "-h", (show $ model ^. modelImageSize . isHeight)
-        , "-e", (model ^. modelEnd . _TimeSpec)
-        , "-s", (model ^. modelStart . _TimeSpec)
-        , fname
-        ]
-      ++ rrdCmd (model ^. modelStep) (model ^. modelFiles)
-    return fname
-  -- postGUIAsync $ finally
-  finally
-    (imageSetFromFile (viewImage view) file)
-    (removeFile file)
+redrawChart
+  :: View
+  -> (TVar Model, Model)
+  -- ^ To set fallback model to
+  -> Model
+  -- ^ New model
+  -> IO ()
+redrawChart view (fbVar, fbModel) model =
+  try (bracket mkFile removeFile work) >>= \case
+    Left (SomeException e) -> do
+      hPrint stderr e
+      revertView view fbModel
+      atomically $ do
+        oldModel <- readTVar fbVar
+        when (oldModel == model) $
+          writeTVar fbVar fbModel
+    Right () -> return ()
+  where
+    mkFile = do
+      temp <- getTemporaryDirectory
+      u <- nextRandom
+      let fname = temp </> show u
+      callProcess "rrdtool"
+        $ [ "graph"
+          , "-a", "PNG", "-D"
+          , "-w", (show $ model ^. modelImageSize . isWidth)
+          , "-h", (show $ model ^. modelImageSize . isHeight)
+          , "-e", (model ^. modelEnd . _TimeSpec)
+          , "-s", (model ^. modelStart . _TimeSpec)
+          , fname
+          ]
+        ++ rrdCmd (model ^. modelStep) (model ^. modelFiles)
+      return fname
+    work file = imageSetFromFile (viewImage view) file
+
+revertView :: View -> Model -> IO ()
+revertView view model = do
+  Gtk.set (viewStart view) [entryText := model ^. modelStart . _TimeSpec]
+  Gtk.set (viewEnd view) [entryText := model ^. modelEnd . _TimeSpec]
+  Gtk.set (viewStep view)
+    [entryText := (fromMaybe "" $ model ^? modelStep . _Just . _TimeSpec)]
+  widgetSizeAllocate (viewImageContainer view)
+    $ Rectangle 0 0
+    (model ^. modelImageSize . isWidth)
+    (model ^. modelImageSize . isHeight)
 
 mkController :: View -> Model -> IO Controller
 mkController view model' = do
   m <- newTVarIO model'
-  Gtk.set (viewStart view) [entryText := model' ^. modelStart . _TimeSpec]
-  Gtk.set (viewEnd view) [entryText := model' ^. modelEnd . _TimeSpec]
-  Gtk.set (viewStep view)
-    [entryText := (fromMaybe "" $ model' ^? modelStep . _Just . _TimeSpec)]
+  revertView view model'
   let
     controllerInit = do
       model <- readTVarIO m
-      redrawChart view model
+      redrawChart view (m, model') model
     controllerRefresh =
       widgetGetAllocation (viewImageContainer view) >>= refresh True
     controllerResize = refresh False
@@ -79,7 +101,7 @@ mkController view model' = do
             . (modelImageSize .~ ImageSize width height)
         writeTVar m newModel
         return $ when (forced || (newModel /= model))
-          $ redrawChart view newModel
+          $ redrawChart view (m, model) newModel
       work
   return Controller{..}
 
