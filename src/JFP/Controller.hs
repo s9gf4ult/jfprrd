@@ -11,6 +11,7 @@ import Data.UUID.V4 (nextRandom)
 import Graphics.UI.Gtk as Gtk
 import JFP.Cmd
 import JFP.Model
+import JFP.Throttle
 import JFP.View
 import System.Directory
 import System.FilePath
@@ -18,6 +19,11 @@ import System.IO
 import System.Process
 
 import qualified Data.Text as T
+
+data RefreshMsg = RefreshMsg
+  { refreshForce     :: !Bool
+  , refreshRectangle :: !Rectangle
+  }
 
 data Controller = Controller
   { controllerInit    :: !(IO ())
@@ -78,13 +84,7 @@ mkController view model' = do
   m <- newTVarIO model'
   revertView view model'
   let
-    controllerInit = do
-      model <- readTVarIO m
-      redrawChart view (m, model') model
-    controllerRefresh =
-      widgetGetAllocation (viewImageContainer view) >>= refresh True
-    controllerResize = refresh False
-    refresh forced (Rectangle _ _ width height) = do
+    refresh (RefreshMsg forced (Rectangle _ _ width height)) = do
       start <- Gtk.get (viewStart view) entryText
       end <- Gtk.get (viewEnd view) entryText
       step <- Gtk.get (viewStep view) entryText
@@ -103,6 +103,15 @@ mkController view model' = do
         return $ when (forced || (newModel /= model))
           $ redrawChart view (m, model) newModel
       work
+  refreshThrottler <- makeThrottler 0.5 refresh -- every 0.5 secs
+  let
+    controllerInit = do
+      model <- readTVarIO m
+      redrawChart view (m, model') model
+    controllerRefresh = do
+      alloc <- widgetGetAllocation (viewImageContainer view)
+      refreshThrottler $ RefreshMsg True alloc
+    controllerResize alloc = refreshThrottler $ RefreshMsg False alloc
   return Controller{..}
 
 connectSignals :: JFPInput -> Builder -> IO View
