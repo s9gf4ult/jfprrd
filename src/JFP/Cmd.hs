@@ -5,6 +5,7 @@ module JFP.Cmd where
 import Control.Applicative
 import Control.Lens
 import Data.Bits
+import Data.Foldable
 import Data.Set(Set)
 import Data.Word
 import Formatting
@@ -78,14 +79,32 @@ cmdLine Cmd{..} = T.unpack
   $ sformat ("LINE1:" % string % string % ":" % string)
     cmdName (renderColor cmdColor) cmdLegend
 
+commonPrefix :: (Eq a) => [a] -> [a] -> [a]
+commonPrefix (a:as) (b:bs)
+  | a == b = a:commonPrefix as bs
+  | otherwise = []
+commonPrefix _ _ = []
+
+cutPrefixes :: (Eq a) => [[a]] -> [[a]]
+cutPrefixes ls = map (drop $ length prefix) ls
+  where
+    prefix = case ls of
+      (a:b:as) -> foldl' commonPrefix a (b:as)
+      (_:[])   -> []
+      []       -> []
+
+cutSuffixes :: (Eq a) => [[a]] -> [[a]]
+cutSuffixes a = map reverse $ cutPrefixes $ map reverse a
+
 -- | Generates drawing cmd params for rrdtool graph
 rrdCmd :: Maybe TimeSpec -> [File] -> [String]
 rrdCmd step files = map cmdDef cmds ++ map cmdLine cmds
   where
+    fileCuts = cutSuffixes $ cutPrefixes $ map _fileName files
     fps = do
-      File file dss <- files
+      (File file dss, cut) <- zip files fileCuts
       ds <- dss
-      let legend = file ++ "[" ++ ds ++ "]"
+      let legend = cut ++ "[" ++ ds ++ "]"
       return (file, ds, legend)
     toCmd (file, ds, legend) name color
       = Cmd file name color legend ds
