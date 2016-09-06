@@ -27,7 +27,7 @@ library
                      , JFP.Cmd
                      , JFP.Controller
                      , JFP.Model
-                     , JFP.Throttle
+                     , JFP.Threads
                      , JFP.View
   build-depends:       base >= 4.7 && < 5
                      , containers
@@ -38,7 +38,6 @@ library
                      , lens
                      , process
                      , stm
-                     , temporary
                      , text
                      , time
                      , transformers-base
