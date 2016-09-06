@@ -1,7 +1,8 @@
 module JFP.Controller where
 
+import Control.Concurrent
 import Control.Concurrent.STM
-import Control.Exception.Safe
+import Control.Exception
 import Control.Lens
   ( (^.), (^?), (.~), (&), _Just )
 import Control.Monad
@@ -66,7 +67,7 @@ redrawChart view (fbVar, fbModel) model =
           ]
         ++ rrdCmd (model ^. modelStep) (model ^. modelFiles)
       return fname
-    work file = imageSetFromFile (viewImage view) file
+    work file = postGUISync $ imageSetFromFile (viewImage view) file
 
 revertView :: View -> Model -> IO ()
 revertView view model = do
@@ -107,10 +108,10 @@ mkController view model' = do
   let
     controllerInit = do
       model <- readTVarIO m
-      redrawChart view (m, model') model
+      void $ forkIO $ redrawChart view (m, model') model
     controllerRefresh = do
       alloc <- widgetGetAllocation (viewImageContainer view)
-      refreshThrottler $ RefreshMsg True alloc
+      void $ forkIO $ refresh $ RefreshMsg True alloc
     controllerResize alloc = refreshThrottler $ RefreshMsg False alloc
   return Controller{..}
 

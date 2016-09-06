@@ -2,6 +2,4 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-extra-deps:
-- safe-exceptions-0.1.4.0
 resolver: lts-5.17

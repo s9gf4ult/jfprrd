@@ -37,7 +37,6 @@ library
                      , gtk3
                      , lens
                      , process
-                     , safe-exceptions
                      , stm
                      , temporary
                      , text
